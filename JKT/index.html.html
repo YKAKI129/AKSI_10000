@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donasi - Yayasan Kasih Anak Kanker Indonesia</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/min.js"></script>
     <style>
         :root {
             --primary-color: #e63946;
@@ -97,6 +98,11 @@
             background-color: #c92a36;
         }
 
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
         hr {
             border: 0;
             height: 1px;
@@ -113,7 +119,6 @@
             max-width: 100%;
             height: auto;
             border-radius: 8px;
-            /* box-shadow: 0 4px 12px rgba(0,0,0,0.15); */
             margin-top: 15px;
         }
 
@@ -132,14 +137,17 @@
     <h2>Yayasan Kasih Anak Kanker Indonesia</h2>
     
     <div class="qris-section">
-        <!-- <h3>Scan QRIS untuk Berdonasi</h3> -->
         <img src="QR JKT.jpeg" alt="QRIS YKAKI Jakarta" class="qris-image">
     </div>
 
     <form id="donationForm">
+        <input type="hidden" name="target_email" value="it.ykaki@gmail.com">
+        <input type="hidden" id="hiddenDate" name="donation_date">
+        <input type="hidden" id="hiddenSerial" name="voucher_serial">
+
         <div class="form-group">
             <label id="nameLabel" for="donorName">Nama Donatur</label>
-            <input type="text" id="donorName" placeholder="Masukkan nama lengkap Anda" required>
+            <input type="text" id="donorName" name="donor_name" placeholder="Masukkan nama lengkap Anda" required>
             <div class="checkbox-group">
                 <input type="checkbox" id="anonymousCheck">
                 <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama saya (Anonim)</label>
@@ -148,12 +156,12 @@
 
         <div class="form-group">
             <label for="donationAmount">Jumlah Donasi (Rp)</label>
-            <input type="number" id="donationAmount" placeholder="10000" min="10000" required>
+            <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
         </div>
 
         <div class="form-group">
             <label for="transferProof">Upload Bukti Transfer</label>
-            <input type="file" id="transferProof" accept="image/*" required>
+            <input type="file" id="transferProof" name="transfer_proof" accept="image/*" required>
         </div>
 
         <button type="submit" id="submitBtn">Konfirmasi & Ambil Voucher</button>
@@ -165,29 +173,34 @@
         <h3>Terima Kasih Atas Kebaikan Anda!</h3>
         <p>E-Voucher Penghargaan Anda telah berhasil diterbitkan:</p>
         
-        <canvas id="voucherCanvas"><img src="kupon_10000.png" alt=""></canvas>
+        <canvas id="voucherCanvas"></canvas>
         <br>
         <button class="download-btn" id="downloadBtn">Simpan / Download Voucher</button>
     </div>
 </div>
 
 <script>
+    // =============================================================
+    // INISIALISASI EMAILJS
+    // Ganti teks di bawah dengan "Public Key" asli Anda dari EmailJS
+    // =============================================================
+    emailjs.init({
+      publicKey: "YOUR_PUBLIC_KEY", 
+    });
+
     const anonymousCheck = document.getElementById('anonymousCheck');
     const donorNameInput = document.getElementById('donorName');
     const donationForm = document.getElementById('donationForm');
+    const submitBtn = document.getElementById('submitBtn');
     const voucherArea = document.getElementById('voucherArea');
     const divider = document.getElementById('divider');
     const canvas = document.getElementById('voucherCanvas');
     const ctx = canvas.getContext('2d');
 
-    // MENGISI TEMPLATE SECARA OTOMATIS
+    // Load gambar kupon otomatis
     let img = new Image();
     img.src = "kupon_10000.png"; 
-    
-    // PERBAIKAN 1: Jangan pasang crossOrigin secara agresif di awal agar tidak langsung diblokir browser lokal
-    // img.crossOrigin = "anonymous"; 
 
-    // Fitur Sembunyikan Nama (Anonim)
     anonymousCheck.addEventListener('change', function() {
         if(this.checked) {
             donorNameInput.value = "Orang Baik";
@@ -198,36 +211,39 @@
         }
     });
 
-    // Proses Pembentukan Grafik Voucher saat Form di-Submit
     donationForm.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Mengirim Bukti ke Email & Memproses...";
 
         const nama = donorNameInput.value || "Orang Baik";
         const nominalMentah = document.getElementById('donationAmount').value;
         const jumlah = parseInt(nominalMentah).toLocaleString('id-ID');
-        
         const opsiTanggal = { year: 'numeric', month: 'long', day: 'numeric' };
         const tanggal = new Date().toLocaleDateString('id-ID', opsiTanggal);
         const nomorSeri = "" + Math.floor(100000 + Math.random() * 900000);
 
-        // Menampilkan wadah elemen voucher
+        // Pasang data ke input tersembunyi agar ikut terkirim ke email
+        document.getElementById('hiddenDate').value = tanggal;
+        document.getElementById('hiddenSerial').value = nomorSeri;
+
+        // Tampilkan container voucher terlebih dahulu
         divider.style.display = 'block';
         voucherArea.style.display = 'block';
         voucherArea.scrollIntoView({ behavior: 'smooth' });
 
-        // PERBAIKAN 2: Penanganan kondisi pemuatan gambar yang aman dari CORS lokal browser
+        // Evaluasi pemuatan gambar yang aman dari CORS
         if (img.complete && img.naturalWidth !== 0) {
             gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+            kirimEmailKeYkaki(this);
         } else {
             img.onload = function() {
                 gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                kirimEmailKeYkaki(donationForm);
             };
-
-            // JIKA BLOKIR CORS TERJADI (Gambar tidak tampil/gagal muat otomatis)
             img.onerror = function() {
-                console.log("CORS Terdeteksi. Mengonversi gambar secara aman...");
-                
-                // Mengambil gambar secara asynchronous dan mengubahnya menjadi Blob lokal yang diizinkan browser
+                // Jalankan metode konversi base64 jika diblokir oleh sistem file lokal browser
                 fetch('kupon_10000.png')
                     .then(response => response.blob())
                     .then(blob => {
@@ -236,19 +252,36 @@
                             img = new Image();
                             img.onload = function() {
                                 gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                                kirimEmailKeYkaki(donationForm);
                             };
-                            img.src = reader.result; // Gambar diubah menjadi Data URL aman
+                            img.src = reader.result;
                         };
                         reader.readAsDataURL(blob);
                     })
                     .catch(err => {
-                        // Jika fetch gagal (pada beberapa browser yang sangat ketat)
-                        console.error("Gagal memuat gambar template. Menampilkan teks darurat.");
                         gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                        kirimEmailKeYkaki(donationForm);
                     });
             };
         }
     });
+
+    // Fungsi pengiriman email otomatis via EmailJS
+    function kirimEmailKeYkaki(formElement) {
+        // Ganti 'YOUR_SERVICE_ID' dengan Service ID SMTP Anda (ex: service_de69rd8)
+        // Ganti 'YOUR_TEMPLATE_ID' dengan Template ID Anda dari dashboard EmailJS
+        emailjs.sendForm('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', formElement)
+            .then(function() {
+                console.log('Bukti TF Berhasil Dikirim ke it.ykaki@gmail.com!');
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Konfirmasi & Ambil Voucher";
+            }, function(error) {
+                console.error('EmailJS Error:', error);
+                alert("Sistem gagal mengirim email otomatis. Silakan periksa kembali parameter Port/SSL di dashboard EmailJS Anda.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Konfirmasi & Ambil Voucher";
+            });
+    }
 
     function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri) {
         canvas.width = img.naturalWidth || 2048;
@@ -259,23 +292,21 @@
 
         ctx.clearRect(0, 0, W, H);
 
-        // Jika gambar berhasil dimuat, jadikan background
         if(img.naturalWidth !== 0) {
             ctx.drawImage(img, 0, 0, W, H);
         } else {
-            // Background darurat warna biru jika gambar kupon_10000.png hilang dari folder
             ctx.fillStyle = "#01A5E1";
             ctx.fillRect(0, 0, W, H);
         }
 
         const ukuranHurufStub = Math.round(H * 0.035);
 
-        // 1. PROSES CETAK DATA BERDIRI (VERTIKAL)
+        // 1. Plot Teks Vertikal di Stub Kiri Kupon
         cetakTeksTegak(nama, W * 0.145, H * 0.68, `bold ${ukuranHurufStub}px Arial`, "#002A54");
         cetakTeksTegak(tanggal, W * 0.180, H * 0.68, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
-        cetakTeksTegak(nomorSeri, W * 0.110, H * 0.68, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
+        cetakTeksTegak("No. " + nomorSeri, W * 0.110, H * 0.68, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
 
-        // 2. PROSES CETAK DATA HORIZONTAL
+        // 2. Plot Nomor Seri di Atas Kepala Kiri Stub
         ctx.fillStyle = "#01A5E1"; 
         ctx.fillRect(W * 0.10, H * 0.09, W * 0.12, H * 0.07);
 
@@ -283,12 +314,13 @@
         ctx.font = `bold ${ukuranHurufStub + 4}px 'Courier New', monospace`;
         ctx.textAlign = "left";
         ctx.textBaseline = "alphabetic";
-        ctx.fillText(nomorSeri, W * 0.102, H * 0.14);
+        ctx.fillText("No. " + nomorSeri, W * 0.102, H * 0.14);
 
+        // 3. Plot Nominal Tengah Kupon Utamanya
         ctx.fillStyle = "#e63946";
         ctx.font = `bold ${ukuranHurufStub + 6}px 'Segoe UI', Arial`;
         ctx.textAlign = "center";
-        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.12);
+        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.52);
     }
 
     function cetakTeksTegak(text, x, y, font, color) {
@@ -304,14 +336,10 @@
     }
 
     document.getElementById('downloadBtn').addEventListener('click', function() {
-        try {
-            const link = document.createElement('a');
-            link.download = 'Voucher_Donasi_YKAKI.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch(e) {
-            alert("Gagal mengunduh otomatis karena batasan browser lokal. Silakan klik kanan pada gambar voucher di bawah lalu pilih 'Simpan Gambar Sebagai'.");
-        }
+        const link = document.createElement('a');
+        link.download = 'Voucher_Donasi_YKAKI.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     });
 </script>
 
