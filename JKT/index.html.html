@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donasi - Yayasan Kasih Anak Kanker Indonesia</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/min.js"></script>
     <style>
         :root {
             --primary-color: #e63946;
@@ -19,6 +18,7 @@
             margin: 0;
             padding: 20px;
             color: var(--dark-color);
+            transition: background-color 0.3s ease;
         }
 
         .container {
@@ -28,6 +28,15 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* Class khusus agar tampilan melar penuh saat voucher muncul */
+        .container.voucher-mode {
+            max-width: 100% !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+            background: transparent !important;
         }
 
         h2, h3 {
@@ -115,16 +124,20 @@
             text-align: center;
         }
 
-        canvas {
-            max-width: 100%;
+        #voucherCanvas {
+            width: 70%;
             height: auto;
+            display: block;
             border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* Bayangan tipis khusus di gambar kupon */
             margin-top: 15px;
         }
 
         .download-btn {
             background-color: var(--secondary-color);
-            margin-top: 15px;
+            margin-top: 20px;
+            max-width: 400px; /* Membatasi lebar tombol download agar tidak terlalu lebar di PC */
+            display: inline-block;
         }
         .download-btn:hover {
             background-color: #315871;
@@ -134,60 +147,58 @@
 <body>
 
 <div class="container">
-    <h2>Yayasan Kasih Anak Kanker Indonesia</h2>
     
-    <div class="qris-section">
-        <img src="QR JKT.jpeg" alt="QRIS YKAKI Jakarta" class="qris-image">
-    </div>
+    <div id="formArea">
+        <h2>Yayasan Kasih Anak Kanker Indonesia</h2>
+        <h2>SCAN BARCODE DIBAWAH UNTUK @KSI10.000</h2>
+        
+        <div class="qris-section">
+            <img src="JKT.jpeg" alt="QRIS YKAKI Jakarta" class="qris-image">
+        </div>
 
-    <form id="donationForm">
-        <input type="hidden" name="target_email" value="it.ykaki@gmail.com">
-        <input type="hidden" id="hiddenDate" name="donation_date">
-        <input type="hidden" id="hiddenSerial" name="voucher_serial">
+        <form id="donationForm">
+            <input type="hidden" id="hiddenDate" name="donation_date">
+            <input type="hidden" id="hiddenSerial" name="voucher_serial">
 
-        <div class="form-group">
-            <label id="nameLabel" for="donorName">Nama Donatur</label>
-            <input type="text" id="donorName" name="donor_name" placeholder="Masukkan nama lengkap Anda" required>
-            <div class="checkbox-group">
-                <input type="checkbox" id="anonymousCheck">
-                <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama saya (Anonim)</label>
+            <div class="form-group">
+                <label id="nameLabel" for="donorName">Nama Donatur</label>
+                <input type="text" id="donorName" name="donor_name" placeholder="Masukkan nama lengkap Anda" required>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="anonymousCheck">
+                    <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama saya (Anonim)</label>
+                </div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="donationAmount">Jumlah Donasi (Rp)</label>
-            <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
-        </div>
+            <div class="form-group">
+                <label for="donationAmount">Jumlah Donasi (Rp)</label>
+                <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
+            </div>
 
-        <div class="form-group">
-            <label for="transferProof">Upload Bukti Transfer</label>
-            <input type="file" id="transferProof" name="transfer_proof" accept="image/*" required>
-        </div>
+            <div class="form-group">
+                <label for="transferProof">Upload Bukti Transfer</label>
+                <input type="file" id="transferProof" name="transfer_proof" accept="image/*" required>
+            </div>
 
-        <button type="submit" id="submitBtn">Konfirmasi & Ambil Voucher</button>
-    </form>
+            <button type="submit" id="submitBtn">Konfirmasi & Ambil E-Kupon</button>
+        </form>
+    </div>
 
     <hr id="divider" style="display:none;">
 
     <div id="voucherArea">
         <h3>Terima Kasih Atas Kebaikan Anda!</h3>
-        <p>E-Voucher Penghargaan Anda telah berhasil diterbitkan:</p>
+        <p>E-Kupon Penghargaan Anda telah berhasil diterbitkan:</p>
+        <p style="font-size: 14px; color: #555; max-width: 500px; margin: 0 auto 15px auto;">
+            Yuk ajak temanmu juga berbagi (upload disosmedmu!) mention ykakiwecare dan cabang masing-masing partisipan ya…
+        </p>
         
-        <canvas id="voucherCanvas"></canvas>
+        <center><canvas id="voucherCanvas"></canvas></center>
         <br>
-        <button class="download-btn" id="downloadBtn">Simpan / Download Voucher</button>
+        <button class="download-btn" id="downloadBtn">Simpan / Download E-Kupon</button>
     </div>
 </div>
 
 <script>
-    // =============================================================
-    // INISIALISASI EMAILJS
-    // Ganti teks di bawah dengan "Public Key" asli Anda dari EmailJS
-    // =============================================================
-    emailjs.init({
-      publicKey: "rhiZ1GWP8AgQdnReV", 
-    });
-
     const anonymousCheck = document.getElementById('anonymousCheck');
     const donorNameInput = document.getElementById('donorName');
     const donationForm = document.getElementById('donationForm');
@@ -197,7 +208,6 @@
     const canvas = document.getElementById('voucherCanvas');
     const ctx = canvas.getContext('2d');
 
-    // Load gambar kupon otomatis
     let img = new Image();
     img.src = "kupon_10000.png"; 
 
@@ -215,35 +225,28 @@
         e.preventDefault();
         
         submitBtn.disabled = true;
-        submitBtn.innerText = "Mengirim Bukti ke Email & Memproses...";
+        submitBtn.innerText = "Memproses E-Kupon...";
 
         const nama = donorNameInput.value || "Orang Baik";
         const nominalMentah = document.getElementById('donationAmount').value;
         const jumlah = parseInt(nominalMentah).toLocaleString('id-ID');
+        
         const opsiTanggal = { year: 'numeric', month: 'long', day: 'numeric' };
         const tanggal = new Date().toLocaleDateString('id-ID', opsiTanggal);
         const nomorSeri = "" + Math.floor(100000 + Math.random() * 900000);
 
-        // Pasang data ke input tersembunyi agar ikut terkirim ke email
         document.getElementById('hiddenDate').value = tanggal;
         document.getElementById('hiddenSerial').value = nomorSeri;
 
-        // Tampilkan container voucher terlebih dahulu
-        divider.style.display = 'block';
-        voucherArea.style.display = 'block';
-        voucherArea.scrollIntoView({ behavior: 'smooth' });
-
-        // Evaluasi pemuatan gambar yang aman dari CORS
         if (img.complete && img.naturalWidth !== 0) {
             gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-            kirimEmailKeYkaki(this);
+            tampilkanVoucherSaja();
         } else {
             img.onload = function() {
                 gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                kirimEmailKeYkaki(donationForm);
+                tampilkanVoucherSaja();
             };
             img.onerror = function() {
-                // Jalankan metode konversi base64 jika diblokir oleh sistem file lokal browser
                 fetch('kupon_10000.png')
                     .then(response => response.blob())
                     .then(blob => {
@@ -252,7 +255,7 @@
                             img = new Image();
                             img.onload = function() {
                                 gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                                kirimEmailKeYkaki(donationForm);
+                                tampilkanVoucherSaja();
                             };
                             img.src = reader.result;
                         };
@@ -260,27 +263,29 @@
                     })
                     .catch(err => {
                         gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                        kirimEmailKeYkaki(donationForm);
+                        tampilkanVoucherSaja();
                     });
             };
         }
     });
 
-    // Fungsi pengiriman email otomatis via EmailJS
-    function kirimEmailKeYkaki(formElement) {
-        // Ganti 'YOUR_SERVICE_ID' dengan Service ID SMTP Anda (ex: service_de69rd8)
-        // Ganti 'YOUR_TEMPLATE_ID' dengan Template ID Anda dari dashboard EmailJS
-        emailjs.sendForm('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', formElement)
-            .then(function() {
-                console.log('Bukti TF Berhasil Dikirim ke it.ykaki@gmail.com!');
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Konfirmasi & Ambil Voucher";
-            }, function(error) {
-                console.error('EmailJS Error:', error);
-                alert("Sistem gagal mengirim email otomatis. Silakan periksa kembali parameter Port/SSL di dashboard EmailJS Anda.");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Konfirmasi & Ambil Voucher";
-            });
+    function tampilkanVoucherSaja() {
+        // 1. Sembunyikan form dan QRIS di atas secara instan
+        document.getElementById('formArea').style.display = 'none';
+        
+        // 2. Ubah Container menjadi mode Full/Lebar dan ubah background body menjadi putih
+        const container = document.querySelector('.container');
+        container.classList.add('voucher-mode');
+        document.body.style.backgroundColor = '#ffffff';
+
+        // 3. Tampilkan area voucher dan gulir otomatis ke atas layar
+        divider.style.display = 'none';
+        voucherArea.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Reset tombol jika suatu saat dibutuhkan kembali
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Konfirmasi & Ambil E-Kupon";
     }
 
     function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri) {
@@ -301,12 +306,12 @@
 
         const ukuranHurufStub = Math.round(H * 0.035);
 
-        // 1. Plot Teks Vertikal di Stub Kiri Kupon
-        cetakTeksTegak(nama, W * 0.145, H * 0.68, `bold ${ukuranHurufStub}px Arial`, "#002A54");
-        cetakTeksTegak(tanggal, W * 0.180, H * 0.68, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
-        cetakTeksTegak("No. " + nomorSeri, W * 0.110, H * 0.68, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
+        // Cetak Data Vertikal di Stub Kiri
+        cetakTeksTegak(nama, W * 0.145, H * 0.63, `bold ${ukuranHurufStub}px Arial`, "#002A54");
+        cetakTeksTegak(tanggal, W * 0.180, H * 0.43, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
+        cetakTeksTegak("" + nomorSeri, W * 0.110, H * 0.63, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
 
-        // 2. Plot Nomor Seri di Atas Kepala Kiri Stub
+        // Cetak Nomor Seri di Kotak Kiri Atas
         ctx.fillStyle = "#01A5E1"; 
         ctx.fillRect(W * 0.10, H * 0.09, W * 0.12, H * 0.07);
 
@@ -316,11 +321,11 @@
         ctx.textBaseline = "alphabetic";
         ctx.fillText("No. " + nomorSeri, W * 0.102, H * 0.14);
 
-        // 3. Plot Nominal Tengah Kupon Utamanya
+        // Cetak Nominal Utama di Tengah Atas Kupon
         ctx.fillStyle = "#e63946";
         ctx.font = `bold ${ukuranHurufStub + 6}px 'Segoe UI', Arial`;
         ctx.textAlign = "center";
-        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.52);
+        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.12);
     }
 
     function cetakTeksTegak(text, x, y, font, color) {
