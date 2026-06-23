@@ -1,1 +1,287 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator E-Kupon - Admin YKAKI</title>
+    <style>
+        :root {
+            --primary-color: #e63946;
+            --secondary-color: #457b9d;
+            --light-color: #f8f9fa;
+            --dark-color: #1d3557;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--dark-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .container.voucher-mode {
+            max-width: 100% !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #c92a36;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #voucherArea {
+            display: none;
+            text-align: center;
+        }
+
+        #voucherCanvas {
+            width: 70%;
+            height: auto;
+            display: block;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            margin-top: 15px;
+        }
+
+        .download-btn {
+            background-color: var(--secondary-color);
+            margin-top: 20px;
+            max-width: 400px;
+            display: inline-block;
+        }
+        .download-btn:hover {
+            background-color: #315871;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="formArea">
+        <h2>Admin YKAKI</h2>
+        <h3>Input Data untuk Terbitkan E-Kupon</h3>
+        <br>
+        <form id="donationForm">
+            <input type="hidden" id="hiddenDate" name="donation_date">
+            <input type="hidden" id="hiddenSerial" name="voucher_serial">
+
+            <div class="form-group">
+                <label id="nameLabel" for="donorName">Nama Donatur</label>
+                <input type="text" id="donorName" name="donor_name" placeholder="Masukkan nama lengkap donatur" required>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="anonymousCheck">
+                    <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama (Anonim / Orang Baik)</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="donationAmount">Jumlah Donasi (Rp)</label>
+                <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
+            </div>
+
+            <button type="submit" id="submitBtn">Generate E-Kupon</button>
+        </form>
+    </div>
+
+    <div id="voucherArea">
+        <h3>E-Kupon Berhasil Diterbitkan!</h3>
+        <p>Silakan unduh dan kirimkan gambar ini kepada Donatur via WhatsApp.</p>
+        
+        <center><canvas id="voucherCanvas"></canvas></center>
+        <br>
+        <button class="download-btn" id="downloadBtn">Download E-Kupon</button>
+        <br><br>
+        <button style="background-color: #6c757d; max-width: 200px;" onclick="window.location.reload();">Input Baru</button>
+    </div>
+</div>
+
+<script>
+    const anonymousCheck = document.getElementById('anonymousCheck');
+    const donorNameInput = document.getElementById('donorName');
+    const donationForm = document.getElementById('donationForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const voucherArea = document.getElementById('voucherArea');
+    const canvas = document.getElementById('voucherCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let img = new Image();
+    img.src = "kupon_10000.png"; 
+
+    anonymousCheck.addEventListener('change', function() {
+        if(this.checked) {
+            donorNameInput.value = "Orang Baik";
+            donorNameInput.disabled = true;
+        } else {
+            donorNameInput.value = "";
+            donorNameInput.disabled = false;
+        }
+    });
+
+    donationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Memproses E-Kupon...";
+
+        const nama = donorNameInput.value || "Orang Baik";
+        const nominalMentah = document.getElementById('donationAmount').value;
+        const jumlah = parseInt(nominalMentah).toLocaleString('id-ID');
+        
+        const opsiTanggal = { year: 'numeric', month: 'long', day: 'numeric' };
+        const tanggal = new Date().toLocaleDateString('id-ID', opsiTanggal);
+        const nomorSeri = "" + Math.floor(100000 + Math.random() * 900000);
+
+        document.getElementById('hiddenDate').value = tanggal;
+        document.getElementById('hiddenSerial').value = nomorSeri;
+
+        if (img.complete && img.naturalWidth !== 0) {
+            gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+            tampilkanVoucherSaja();
+        } else {
+            img.onload = function() {
+                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                tampilkanVoucherSaja();
+            };
+            img.onerror = function() {
+                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                tampilkanVoucherSaja();
+            };
+        }
+    });
+
+    function tampilkanVoucherSaja() {
+        document.getElementById('formArea').style.display = 'none';
+        const container = document.querySelector('.container');
+        container.classList.add('voucher-mode');
+        document.body.style.backgroundColor = '#ffffff';
+        voucherArea.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri) {
+        canvas.width = img.naturalWidth || 2048;
+        canvas.height = img.naturalHeight || 1024;
+
+        const W = canvas.width;
+        const H = canvas.height;
+
+        ctx.clearRect(0, 0, W, H);
+
+        if(img.naturalWidth !== 0) {
+            ctx.drawImage(img, 0, 0, W, H);
+        } else {
+            ctx.fillStyle = "#01A5E1";
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        const ukuranHurufStub = Math.round(H * 0.035);
+
+        cetakTeksTegak(nama, W * 0.145, H * 0.63, `bold ${ukuranHurufStub}px Arial`, "#002A54");
+        cetakTeksTegak(tanggal, W * 0.180, H * 0.43, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
+        cetakTeksTegak("" + nomorSeri, W * 0.110, H * 0.63, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
+
+        ctx.fillStyle = "#01A5E1"; 
+        ctx.fillRect(W * 0.10, H * 0.09, W * 0.12, H * 0.07);
+
+        ctx.fillStyle = "#000000";
+        ctx.font = `bold ${ukuranHurufStub + 4}px 'Courier New', monospace`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("No. " + nomorSeri, W * 0.102, H * 0.14);
+
+        ctx.fillStyle = "#e63946";
+        ctx.font = `bold ${ukuranHurufStub + 6}px 'Segoe UI', Arial`;
+        ctx.textAlign = "center";
+        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.12);
+    }
+
+    function cetakTeksTegak(text, x, y, font, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = color;
+        ctx.font = font;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+        const link = document.createElement('a');
+        link.download = 'Voucher_Donasi_YKAKI.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+</script>
+
+</body>
+</html>
