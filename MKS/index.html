@@ -10,6 +10,7 @@
             --secondary-color: #457b9d;
             --light-color: #f8f9fa;
             --dark-color: #1d3557;
+            --wa-color: #25d366;
         }
 
         body {
@@ -18,7 +19,6 @@
             margin: 0;
             padding: 20px;
             color: var(--dark-color);
-            transition: background-color 0.3s ease;
         }
 
         .container {
@@ -28,15 +28,6 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-
-        /* Class khusus agar tampilan melar penuh saat voucher muncul */
-        .container.voucher-mode {
-            max-width: 100% !important;
-            padding: 10px !important;
-            box-shadow: none !important;
-            background: transparent !important;
         }
 
         h2, h3 {
@@ -45,11 +36,32 @@
             margin-top: 0;
         }
 
+        .instruction-box {
+            background-color: #edf2f7;
+            border-left: 5px solid var(--secondary-color);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+
+        .instruction-box ol {
+            margin: 5px 0 0 20px;
+            padding: 0;
+        }
+
+        .instruction-box li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
         .qris-section {
             text-align: center;
             margin-bottom: 25px;
             padding: 15px;
             border-radius: 8px;
+            background: #fff;
+            /* border: 2px dashed #ccc; */
         }
 
         .qris-image {
@@ -69,13 +81,14 @@
             font-weight: 600;
         }
 
-        input[type="text"], input[type="number"], input[type="file"] {
+        input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 16px;
+            background-color: #fff;
         }
 
         .checkbox-group {
@@ -90,10 +103,10 @@
             height: 18px;
         }
 
-        button {
+        .btn-wa {
             width: 100%;
             padding: 14px;
-            background-color: var(--primary-color);
+            background-color: var(--wa-color);
             color: white;
             border: none;
             border-radius: 6px;
@@ -101,110 +114,73 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
-        button:hover {
-            background-color: #c92a36;
-        }
-
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        hr {
-            border: 0;
-            height: 1px;
-            background: #ddd;
-            margin: 30px 0;
-        }
-
-        #voucherArea {
-            display: none;
-            text-align: center;
-        }
-
-        #voucherCanvas {
-            width: 70%;
-            height: auto;
-            display: block;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* Bayangan tipis khusus di gambar kupon */
-            margin-top: 15px;
-        }
-
-        .download-btn {
-            background-color: var(--secondary-color);
-            margin-top: 20px;
-            max-width: 400px; /* Membatasi lebar tombol download agar tidak terlalu lebar di PC */
-            display: inline-block;
-        }
-        .download-btn:hover {
-            background-color: #315871;
+        .btn-wa:hover {
+            background-color: #20ba5a;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <h2>Yayasan Kasih Anak Kanker Indonesia</h2>
+    <h3 style="font-size: 16px; color: #555;">SCAN QRIS DIBAWAH UNTUK @KSI10.000 YKAKI MAKASSAR</h3>
     
-    <div id="formArea">
-        <h2>Yayasan Kasih Anak Kanker Indonesia</h2>
-        <h2>SCAN QRIS DIBAWAH UNTUK @KSI10.000 YKAKI MAKASSAR</h2>
-        
-        <div class="qris-section">
-            <img src="MKS.jpeg" alt="QRIS YKAKI Jakarta" class="qris-image">
+    <div class="qris-section">
+        <img src="MKS.jpeg" alt="QRIS YKAKI Semarang" class="qris-image">
+    </div>
+
+    <div class="instruction-box">
+        <strong style="color: var(--dark-color);">Cara Mengambil E-Kupon :</strong>
+        <ol>
+            <li>Pindai QRIS di atas dan lakukan transfer donasi sesuai keinginan (Min : 10.000).</li>
+            <li>Isi form data donasi di bawah ini dengan benar.</li>
+            <li>Klik tombol <strong>"Konfirmasi ke WhatsApp Admin"</strong>. Anda akan diarahkan ke WhatsApp Admin Cabang dengan format teks otomatis.</li>
+            <li><strong>Kirim pesan tersebut serta lampirkan bukti transfer Anda</strong> di chat WhatsApp.</li>
+            <li>Admin akan memverifikasi dan mengirimkan E-Kupon resmi Anda kembali melalui WhatsApp.</li>
+        </ol>
+    </div>
+
+    <form id="clientDonationForm">
+        <div class="form-group">
+            <label for="donorName">Nama Donatur</label>
+            <input type="text" id="donorName" placeholder="Masukkan nama lengkap Anda" required>
+            <div class="checkbox-group">
+                <input type="checkbox" id="anonymousCheck">
+                <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama saya (Anonim)</label>
+            </div>
         </div>
 
-        <form id="donationForm">
-            <input type="hidden" id="hiddenDate" name="donation_date">
-            <input type="hidden" id="hiddenSerial" name="voucher_serial">
+        <div class="form-group">
+            <label for="donationAmount">Jumlah Donasi (Rp)</label>
+            <input type="number" id="donationAmount" placeholder="10000" min="10000" required>
+        </div>
 
-            <div class="form-group">
-                <label id="nameLabel" for="donorName">Nama Donatur</label>
-                <input type="text" id="donorName" name="donor_name" placeholder="Masukkan nama lengkap Anda" required>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="anonymousCheck">
-                    <label style="margin: 0; font-weight: normal; font-size: 14px;" for="anonymousCheck">Sembunyikan nama saya (Anonim)</label>
-                </div>
-            </div>
+        <div class="form-group">
+            <label for="adminBranch">Admin :</label>
+            <select id="adminBranch" required>
+                <!-- <option value="" disabled selected>-- Pilih Cabang Terdekat --</option> -->
+                <!-- ISI VALUE DENGAN NOMOR WA ADMIN (Gunakan format 62xxx tanpa spasi/tanda +) -->
+                <option value="6285256103799">YKAKI Makassar</option>
+            </select>
+        </div>
 
-            <div class="form-group">
-                <label for="donationAmount">Jumlah Donasi (Rp)</label>
-                <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
-            </div>
-
-            <button type="submit" id="submitBtn">Ambil E-Kupon</button>
-        </form>
-    </div>
-
-    <hr id="divider" style="display:none;">
-
-    <div id="voucherArea">
-        <h3>Terima Kasih Atas Kebaikan Anda!</h3>
-        <p>E-Kupon Penghargaan Anda telah berhasil diterbitkan:</p>
-        <p style="font-size: 14px; color: #555; max-width: 500px; margin: 0 auto 15px auto;">
-            Yuk ajak temanmu juga berbagi (upload disosmedmu!) mention ykakiwecare dan cabang masing-masing partisipan ya…
-        </p>
-        
-        <center><canvas id="voucherCanvas"></canvas></center>
-        <br>
-        <button class="download-btn" id="downloadBtn">Simpan / Download E-Kupon</button>
-    </div>
+        <button type="submit" class="btn-wa">
+            <svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2C6.5 2 2 6.5 2 12C2 13.76 2.46 15.42 3.27 16.89L1.44 22.19L6.87 20.38C8.29 21.16 9.9 21.59 11.59 21.59C17.13 21.59 21.6 17.11 21.6 11.59C21.6 6.07 17.13 2 12.04 2M11.59 20.03C10.13 20.03 8.71 19.64 7.46 18.91L7.16 18.73L3.94 19.8L5.03 16.65L4.83 16.34C4.02 15.06 3.59 13.58 3.59 12C3.59 7.37 7.34 3.62 12 3.62C16.63 3.62 20.38 7.37 20.38 12C20.37 16.63 16.62 20.03 11.59 20.03M15.9 14.12C15.68 14 14.6 13.47 14.4 13.4C14.2 13.32 14.05 13.29 13.9 13.5C13.75 13.72 13.33 14.21 13.2 14.36C13.08 14.5 12.96 14.53 12.74 14.42C12.5 14.3 11.75 14.05 10.86 13.26C10.17 12.64 9.7 11.88 9.56 11.65C9.43 11.42 9.55 11.3 9.66 11.19C9.77 11.08 9.9 10.91 10.03 10.76C10.15 10.6 10.2 10.47 10.28 10.32C10.36 10.17 10.32 10.04 10.26 9.92C10.2 9.8 9.77 8.74 9.59 8.32C9.41 7.9 9.23 7.96 9.1 7.96C8.97 7.96 8.82 7.96 8.68 7.96C8.53 7.96 8.3 8.02 8.1 8.23C7.91 8.44 7.36 8.96 7.36 10C7.36 11.05 8.12 12.07 8.23 12.22C8.34 12.37 9.73 14.5 11.86 15.42C12.37 15.64 12.77 15.78 13.08 15.88C13.6 16.04 14.07 16.02 14.45 15.96C14.87 15.9 15.74 15.43 15.92 14.92C16.1 14.41 16.1 13.97 16.05 13.88C16 13.79 15.87 13.74 15.9 14.12Z"/></svg>
+            Konfirmasi ke WhatsApp Admin
+        </button>
+    </form>
 </div>
 
 <script>
     const anonymousCheck = document.getElementById('anonymousCheck');
     const donorNameInput = document.getElementById('donorName');
-    const donationForm = document.getElementById('donationForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const voucherArea = document.getElementById('voucherArea');
-    const divider = document.getElementById('divider');
-    const canvas = document.getElementById('voucherCanvas');
-    const ctx = canvas.getContext('2d');
-
-    let img = new Image();
-    img.src = "kupon_10000.png"; 
+    const clientDonationForm = document.getElementById('clientDonationForm');
 
     anonymousCheck.addEventListener('change', function() {
         if(this.checked) {
@@ -216,130 +192,25 @@
         }
     });
 
-    donationForm.addEventListener('submit', function(e) {
+    clientDonationForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Memproses E-Kupon...";
 
         const nama = donorNameInput.value || "Orang Baik";
         const nominalMentah = document.getElementById('donationAmount').value;
         const jumlah = parseInt(nominalMentah).toLocaleString('id-ID');
+        const waAdmin = document.getElementById('adminBranch').value;
+
+        // Membuat format teks WhatsApp
+        const teksWA = `Halo Admin YKAKI, saya ingin melakukan konfirmasi donasi.\n\n` +
+                      `Nama Donatur : ${nama}\n` +
+                      `Jumlah Donasi (Rp) : ${jumlah}\n` +
+                      `Lampirkan Bukti Transfer : [Mohon lampirkan foto/screenshot bukti transfer di bawah ini]`;
+
+        // Encode teks agar kompatibel dengan URL WA
+        const urlWA = `https://api.whatsapp.com/send?phone=${waAdmin}&text=${encodeURIComponent(teksWA)}`;
         
-        const opsiTanggal = { year: 'numeric', month: 'long', day: 'numeric' };
-        const tanggal = new Date().toLocaleDateString('id-ID', opsiTanggal);
-        const nomorSeri = "" + Math.floor(100000 + Math.random() * 900000);
-
-        document.getElementById('hiddenDate').value = tanggal;
-        document.getElementById('hiddenSerial').value = nomorSeri;
-
-        if (img.complete && img.naturalWidth !== 0) {
-            gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-            tampilkanVoucherSaja();
-        } else {
-            img.onload = function() {
-                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                tampilkanVoucherSaja();
-            };
-            img.onerror = function() {
-                fetch('kupon_10000.png')
-                    .then(response => response.blob())
-                    .then(blob => {
-                        const reader = new FileReader();
-                        reader.onloadend = function() {
-                            img = new Image();
-                            img.onload = function() {
-                                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                                tampilkanVoucherSaja();
-                            };
-                            img.src = reader.result;
-                        };
-                        reader.readAsDataURL(blob);
-                    })
-                    .catch(err => {
-                        gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
-                        tampilkanVoucherSaja();
-                    });
-            };
-        }
-    });
-
-    function tampilkanVoucherSaja() {
-        // 1. Sembunyikan form dan QRIS di atas secara instan
-        document.getElementById('formArea').style.display = 'none';
-        
-        // 2. Ubah Container menjadi mode Full/Lebar dan ubah background body menjadi putih
-        const container = document.querySelector('.container');
-        container.classList.add('voucher-mode');
-        document.body.style.backgroundColor = '#ffffff';
-
-        // 3. Tampilkan area voucher dan gulir otomatis ke atas layar
-        divider.style.display = 'none';
-        voucherArea.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Reset tombol jika suatu saat dibutuhkan kembali
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Konfirmasi & Ambil E-Kupon";
-    }
-
-    function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri) {
-        canvas.width = img.naturalWidth || 2048;
-        canvas.height = img.naturalHeight || 1024;
-
-        const W = canvas.width;
-        const H = canvas.height;
-
-        ctx.clearRect(0, 0, W, H);
-
-        if(img.naturalWidth !== 0) {
-            ctx.drawImage(img, 0, 0, W, H);
-        } else {
-            ctx.fillStyle = "#01A5E1";
-            ctx.fillRect(0, 0, W, H);
-        }
-
-        const ukuranHurufStub = Math.round(H * 0.035);
-
-        // Cetak Data Vertikal di Stub Kiri
-        cetakTeksTegak(nama, W * 0.145, H * 0.63, `bold ${ukuranHurufStub}px Arial`, "#002A54");
-        cetakTeksTegak(tanggal, W * 0.180, H * 0.43, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
-        cetakTeksTegak("" + nomorSeri, W * 0.110, H * 0.63, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
-
-        // Cetak Nomor Seri di Kotak Kiri Atas
-        ctx.fillStyle = "#01A5E1"; 
-        ctx.fillRect(W * 0.10, H * 0.09, W * 0.12, H * 0.07);
-
-        ctx.fillStyle = "#000000";
-        ctx.font = `bold ${ukuranHurufStub + 4}px 'Courier New', monospace`;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "alphabetic";
-        ctx.fillText("No. " + nomorSeri, W * 0.102, H * 0.14);
-
-        // Cetak Nominal Utama di Tengah Atas Kupon
-        ctx.fillStyle = "#e63946";
-        ctx.font = `bold ${ukuranHurufStub + 6}px 'Segoe UI', Arial`;
-        ctx.textAlign = "center";
-        ctx.fillText(`[ Nilai Partisipasi: Rp ${jumlah} ]`, W * 0.54, H * 0.12);
-    }
-
-    function cetakTeksTegak(text, x, y, font, color) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillStyle = color;
-        ctx.font = font;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, 0, 0);
-        ctx.restore();
-    }
-
-    document.getElementById('downloadBtn').addEventListener('click', function() {
-        const link = document.createElement('a');
-        link.download = 'Voucher_Donasi_YKAKI.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        // Mengalihkan pengguna ke aplikasi WhatsApp
+        window.open(urlWA, '_blank');
     });
 </script>
 
