@@ -53,13 +53,14 @@
             font-weight: 600;
         }
 
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], select {
             width: 100%;
             padding: 12px;
             border: 1px solid #ccc;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 16px;
+            background-color: #fff;
         }
 
         .checkbox-group {
@@ -142,9 +143,27 @@
                 </div>
             </div>
 
+
+
             <div class="form-group">
                 <label for="donationAmount">Jumlah Donasi (Rp)</label>
                 <input type="number" id="donationAmount" name="donation_amount" placeholder="10000" min="10000" required>
+            </div>
+
+                        <!-- PERUBAHAN: Menambahkan pilihan Cabang YKAKI -->
+            <div class="form-group">
+                <label for="ykakiBranch">Cabang YKAKI</label>
+                <select id="ykakiBranch" name="ykaki_branch" required>
+                    <option value="" disabled selected>-- Pilih Cabang YKAKI --</option>
+                    <option value="YKAKI - JAKARTA">YKAKI - JAKARTA</option>
+                    <option value="YKAKI - BANDUNG">YKAKI - BANDUNG</option>
+                    <option value="YKAKI - SEMARANG">YKAKI - SEMARANG</option>
+                    <option value="YKAKI - SURABAYA">YKAKI - SURABAYA</option>
+                    <option value="YKAKI - MAKASSAR">YKAKI - MAKASSAR</option>
+                    <option value="YKAKI - PEKANBARU">YKAKI - PEKANBARU</option>
+                    <option value="YKAKI - YOGYAKARTA">YKAKI - YOGYAKARTA</option>
+                    <option value="YKAKI - MANADO">YKAKI - MANADO</option>
+                </select>
             </div>
 
             <button type="submit" id="submitBtn">Ambil E-Kupon</button>
@@ -194,6 +213,7 @@
         const nama = donorNameInput.value || "Orang Baik";
         const nominalMentah = document.getElementById('donationAmount').value;
         const jumlah = parseInt(nominalMentah).toLocaleString('id-ID');
+        const cabang = document.getElementById('ykakiBranch').value; // Mengambil data cabang
         
         const opsiTanggal = { year: 'numeric', month: 'long', day: 'numeric' };
         const tanggal = new Date().toLocaleDateString('id-ID', opsiTanggal);
@@ -203,15 +223,15 @@
         document.getElementById('hiddenSerial').value = nomorSeri;
 
         if (img.complete && img.naturalWidth !== 0) {
-            gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+            gambarKeCanvas(nama, jumlah, tanggal, nomorSeri, cabang);
             tampilkanVoucherSaja();
         } else {
             img.onload = function() {
-                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri, cabang);
                 tampilkanVoucherSaja();
             };
             img.onerror = function() {
-                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri);
+                gambarKeCanvas(nama, jumlah, tanggal, nomorSeri, cabang);
                 tampilkanVoucherSaja();
             };
         }
@@ -226,7 +246,7 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri) {
+    function gambarKeCanvas(nama, jumlah, tanggal, nomorSeri, cabang) {
         canvas.width = img.naturalWidth || 2048;
         canvas.height = img.naturalHeight || 1024;
 
@@ -247,6 +267,12 @@
         cetakTeksTegak(nama, W * 0.145, H * 0.63, `bold ${ukuranHurufStub}px Arial`, "#002A54");
         cetakTeksTegak(tanggal, W * 0.180, H * 0.43, `bold ${ukuranHurufStub - 2}px Arial`, "#002A54");
         cetakTeksTegak("" + nomorSeri, W * 0.110, H * 0.63, `bold ${ukuranHurufStub}px 'Courier New', monospace`, "#D32F2F");
+
+        // Opsi: Mencetak nama cabang di atas E-Kupon jika diperlukan
+        ctx.fillStyle = "#002A54";
+        ctx.font = `bold ${ukuranHurufStub}px 'Segoe UI', Arial`;
+        ctx.textAlign = "right";
+        ctx.fillText(cabang, W * 0.95, H * 0.13);
 
         ctx.fillStyle = "#01A5E1"; 
         ctx.fillRect(W * 0.10, H * 0.09, W * 0.12, H * 0.07);
